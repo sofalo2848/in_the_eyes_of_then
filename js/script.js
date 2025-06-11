@@ -8,14 +8,12 @@ const slides = [
 ];
 
 let currentSlide = 0;
-let autoplayInterval;
 const container = document.getElementById("slide-container");
 const nextBtn = document.getElementById("next-btn");
-nextBtn.style.display = "none"; // Hide initially
+const prevBtn = document.getElementById("prev-btn");
 
 function renderSlide(index) {
-  container.innerHTML = ""; // Clear slide
-
+  container.innerHTML = "";
   const slide = slides[index];
 
   if (slide.type === "image") {
@@ -28,12 +26,9 @@ function renderSlide(index) {
     const img = document.createElement("img");
     img.src = "../media/background.gif";
     container.appendChild(img);
-
-    // Optional audio logic here if needed
   }
 
   if (slide.type === "channel-choice") {
-    clearInterval(autoplayInterval); // Stop autoplay here
     const tvImg = document.createElement("img");
     tvImg.src = "../media/choice.png";
     container.appendChild(tvImg);
@@ -52,13 +47,34 @@ function renderSlide(index) {
     btnContainer.appendChild(btnCN);
     btnContainer.appendChild(btnNick);
     container.appendChild(btnContainer);
+
+    nextBtn.style.display = "none"; // Wait for user to choose
   }
 
   if (slide.type === "end") {
     const img = document.createElement("img");
     img.src = slide.src;
     container.appendChild(img);
-    nextBtn.style.display = "none"; // No next after end
+  }
+
+  updateButtons();
+}
+
+function updateButtons() {
+  // Show previous only if we're past the first slide
+  prevBtn.style.display = currentSlide > 0 ? "block" : "none";
+
+  // Show next unless we're at the last slide or it's a channel-choice waiting for input
+  const isLastSlide = currentSlide === slides.length - 1;
+  const isChoiceSlide = slides[currentSlide].type === "channel-choice";
+  const isEndSlide = slides[currentSlide].type === "end";
+
+  if (!isLastSlide && !isChoiceSlide && !isEndSlide) {
+    nextBtn.style.display = "inline-block";
+  }
+
+  if (isLastSlide || isEndSlide) {
+    nextBtn.style.display = "none";
   }
 }
 
@@ -68,33 +84,28 @@ function showChannel(choice) {
   container.innerHTML = "";
   container.appendChild(channelImg);
 
-  // Now show the next button after a short delay
-  setTimeout(() => {
-    nextBtn.style.display = "block";
-  }, 1000);
+  nextBtn.style.display = "inline-block";
+  prevBtn.style.display = "inline-block";
 }
 
 function nextSlide() {
   if (currentSlide < slides.length - 1) {
     currentSlide++;
     renderSlide(currentSlide);
-    nextBtn.style.display = "none"; // Hide after advancing
   }
 }
 
-// Autoplay logic
-function startAutoplay() {
-  autoplayInterval = setInterval(() => {
-    if (slides[currentSlide].type === "channel-choice") {
-      clearInterval(autoplayInterval);
-      return;
-    }
-    nextSlide();
-  }, 2500); // Change slide every 2.5 seconds
+function prevSlide() {
+  if (currentSlide > 0) {
+    currentSlide--;
+    renderSlide(currentSlide);
+  }
 }
 
 nextBtn.addEventListener("click", nextSlide);
+prevBtn.addEventListener("click", prevSlide);
 
-// Initial render and autoplay
+// Initial state
+nextBtn.style.display = "inline-block"; // Only next is shown at first
+prevBtn.style.display = "none";         // Hide previous initially
 renderSlide(currentSlide);
-startAutoplay();
